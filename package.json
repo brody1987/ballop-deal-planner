@@ -1,0 +1,19 @@
+{
+  "name": "ballop-deal-planner",
+  "version": "1.0.0",
+  "description": "밸롭 자사몰 할인 행사 기획 보고서 생성기",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.42.0",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "xlsx": "^0.18.5"
+  }
+}

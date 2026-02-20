@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>밸롭 행사 기획 보고서 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #0a0a0c;
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --primary: #FF6B35;
+  --primary-foreground: #fff;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #FF6B35;
+  --radius: 0.5rem;
+  --success: #22c55e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 48px 24px 40px;
+  text-align: center;
+}
+.header h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.header p {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  margin-top: 8px;
+}
+.header .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+.badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+.badge-dot.off { background: var(--destructive); animation: none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Layout */
+.main {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+/* Card */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-header {
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+.card-title .step-num {
+  width: 22px; height: 22px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.card-description {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+/* Upload Zone */
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.upload-zone {
+  border: 1px dashed #3f3f46;
+  border-radius: var(--radius);
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary);
+  background: rgba(255,107,53,0.04);
+}
+.upload-zone.uploaded {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(34,197,94,0.04);
+}
+.upload-zone input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.upload-zone .icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+.upload-zone .label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.upload-zone .hint {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.upload-zone .filename {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Checkbox grid */
+.event-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.event-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.event-option:hover {
+  background: var(--accent);
+}
+.event-option.selected {
+  border-color: var(--primary);
+  background: rgba(255,107,53,0.06);
+}
+.event-option input { display: none; }
+.event-check {
+  width: 16px; height: 16px;
+  border: 1.5px solid #52525b;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.event-option.selected .event-check {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.event-option.selected .event-check::after {
+  content: '';
+  width: 8px; height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.event-name { font-size: 13px; font-weight: 500; }
+.event-desc { font-size: 11px; color: var(--muted-foreground); margin-top: 1px; }
+
+.select-all {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.select-all:hover { color: var(--foreground); }
+
+/* Toggle / Switch */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.switch {
+  width: 44px; height: 24px;
+  background: var(--input);
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: 1px solid #3f3f46;
+}
+.switch.on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.switch-thumb {
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.switch.on .switch-thumb { transform: translateX(20px); }
+.toggle-label { font-size: 13px; font-weight: 500; }
+.toggle-hint { font-size: 12px; color: var(--muted-foreground); margin-top: 2px; }
+
+/* API Key Input */
+.input-group { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: none; }
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+.input-field {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input-field::placeholder { color: #52525b; }
+.input-field:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(255,107,53,0.2);
+}
+.input-hint {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 6px;
+}
+
+/* Button */
+.btn-generate {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: -0.01em;
+}
+.btn-generate:hover { opacity: 0.9; }
+.btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Progress */
+.progress-section { display: none; }
+.progress-section.show { display: block; }
+.progress-label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.progress-track {
+  background: var(--secondary);
+  border-radius: 9999px;
+  height: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+.progress-text {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 10px;
+}
+.progress-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.progress-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--secondary);
+  transition: background 0.2s;
+}
+.progress-dot.done { background: var(--success); }
+.progress-dot.active { background: var(--primary); animation: pulse 1s infinite; }
+
+/* Result */
+.result { display: none; }
+.result.show { display: block; }
+.result-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 32px;
+  text-align: center;
+}
+.result-icon {
+  width: 48px; height: 48px;
+  background: rgba(34,197,94,0.1);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+.result-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.result-card .result-desc {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.stat {
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--secondary);
+  border-radius: var(--radius);
+}
+.stat .sv {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.stat .sl {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.result-btns { display: flex; gap: 8px; justify-content: center; }
+.result-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  border: none;
+}
+.result-btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.result-btn-primary:hover { opacity: 0.9; }
+.result-btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+.result-btn-outline:hover { background: var(--accent); }
+
+/* Separator */
+.separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: #52525b;
+  border-top: 1px solid var(--border);
+}
+
+@media(max-width:600px) {
+  .upload-grid { grid-template-columns: 1fr; }
+  .event-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>밸롭 행사 기획 보고서 생성기</h1>
+  <p>재고/판매 데이터를 업로드하고, 원하는 행사를 선택하세요</p>
+  <div class="badge" id="aiBadge">
+    <span class="badge-dot" id="badgeDot"></span>
+    <span id="aiStatusText">AI 상태 확인 중...</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="step-num">1</span> 데이터 파일 업로드</div>
+      <div class="card-description">재고(.xls)와 판매(.xls) 파일을 업로드하세요</div>
+    </div>
+    <div class="upload-grid">
+      <div class="upload-zone" id="stockZone">
+        <input type="file" accept=".xls,.xlsx" id="stockFile" onchange="onFileSelect('stock',this)">
+        <div class="icon">📦</div>
+        <div class="label">재고 파일</div>
+        <div class="hint">.xls / .xlsx</div>
+        <div class="filename" id="stockName"></div>
+      </div>
+      <div class="upload-zone" id="salesZone">
+        <input type="file" accept=".xls,.xlsx" id="salesFile" onchange="onFileSelect('sales',this)">
+        <div class="icon">📊</div>
+        <div class="label">판매 파일</div>
+        <div class="hint">.xls / .xlsx</div>
+        <div class="filename" id="salesName"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="step-num">2</span> 행사 유형 선택</div>
+    </div>
+    <div class="select-all" onclick="toggleSelectAll()">전체 선택/해제</div>
+    <div class="event-grid">
+      <label class="event-option selected" data-event="main">
+        <input type="checkbox" value="main" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">메인 행사</div><div class="event-desc">베스트셀러 40~60%</div></div>
+      </label>
+      <label class="event-option selected" data-event="sub">
+        <input type="checkbox" value="sub" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">서브 행사</div><div class="event-desc">숨은 인기 30~45%</div></div>
+      </label>
+      <label class="event-option selected" data-event="season">
+        <input type="checkbox" value="season" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">시즌 행사</div><div class="event-desc">S/S 프리뷰 20~35%</div></div>
+      </label>
+      <label class="event-option selected" data-event="offSeason">
+        <input type="checkbox" value="offSeason" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">역시즌 행사</div><div class="event-desc">여름 아이템 50~70%</div></div>
+      </label>
+      <label class="event-option selected" data-event="newProduct">
+        <input type="checkbox" value="newProduct" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">신상품 출시</div><div class="event-desc">런칭 특가 10~20%</div></div>
+      </label>
+      <label class="event-option selected" data-event="guerrilla">
+        <input type="checkbox" value="guerrilla" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">게릴라 딜</div><div class="event-desc">24시간 한정 60~80%</div></div>
+      </label>
+      <label class="event-option selected" data-event="deadStock">
+        <input type="checkbox" value="deadStock" checked>
+        <div class="event-check"></div>
+        <div><div class="event-name">악성재고 할인</div><div class="event-desc">창고 대방출 70~90%</div></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="step-num">3</span> AI 옵션</div>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">AI 마케팅 콘텐츠 생성</div>
+        <div class="toggle-hint" id="aiHint">Gemini AI로 행사별 카피/전략 자동 생성</div>
+      </div>
+      <div class="switch" id="aiToggle" onclick="toggleAI()">
+        <div class="switch-thumb"></div>
+      </div>
+    </div>
+    <div class="input-group" id="apiKeySection">
+      <label class="input-label">Gemini API Key</label>
+      <input type="password" id="apiKeyInput" class="input-field" placeholder="AIzaSy... 형태의 API 키">
+      <div class="input-hint">Google AI Studio에서 발급받은 API 키를 입력하세요. 키는 서버에 저장되지 않습니다.</div>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <button class="btn-generate" id="generateBtn" onclick="generate()" disabled>
+    보고서 생성
+  </button>
+
+  <!-- Progress -->
+  <div class="card progress-section" id="progressSection" style="margin-top:16px">
+    <div class="progress-label">생성 중...</div>
+    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">준비 중...</div>
+    <div class="progress-dots" id="progressSteps"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="resultSection" style="margin-top:16px">
+    <div class="result-card">
+      <div class="result-icon">✓</div>
+      <h3>보고서 생성 완료</h3>
+      <p class="result-desc" id="resultDesc"></p>
+      <div class="stat-grid" id="resultStats"></div>
+      <div class="result-btns">
+        <a class="result-btn result-btn-primary" id="viewReportBtn" target="_blank">보고서 열기</a>
+        <button class="result-btn result-btn-outline" onclick="location.reload()">새로 만들기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">밸롭 자사몰 할인 행사 기획 보고서 생성기 · Powered by Gemini AI</div>
+
+<script>
+let aiEnabled = false;
+let stockFile = null;
+let salesFile = null;
+
+const savedKey = localStorage.getItem('gemini_api_key') || '';
+if (savedKey) {
+  document.getElementById('apiKeyInput').value = savedKey;
+  aiEnabled = true;
+  document.getElementById('aiToggle').classList.add('on');
+  document.getElementById('apiKeySection').style.display = 'block';
+  document.getElementById('aiStatusText').textContent = 'Gemini AI 활성화됨';
+  document.getElementById('badgeDot').classList.remove('off');
+} else {
+  document.getElementById('aiStatusText').textContent = 'AI 비활성화';
+  document.getElementById('badgeDot').classList.add('off');
+}
+
+document.getElementById('apiKeyInput').addEventListener('input', function() {
+  const v = this.value.trim();
+  if (v) localStorage.setItem('gemini_api_key', v);
+  else localStorage.removeItem('gemini_api_key');
+});
+
+function onFileSelect(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(type + 'Zone').classList.add('uploaded');
+  document.getElementById(type + 'Name').textContent = file.name;
+  if (type === 'stock') stockFile = file; else salesFile = file;
+  updateButton();
+}
+
+function updateButton() {
+  document.getElementById('generateBtn').disabled = !(stockFile && salesFile);
+}
+
+document.querySelectorAll('.event-option').forEach(el => {
+  el.addEventListener('click', () => {
+    const cb = el.querySelector('input');
+    cb.checked = !cb.checked;
+    el.classList.toggle('selected', cb.checked);
+  });
+});
+
+function toggleSelectAll() {
+  const opts = document.querySelectorAll('.event-option');
+  const all = [...opts].every(o => o.classList.contains('selected'));
+  opts.forEach(o => { const cb = o.querySelector('input'); cb.checked = !all; o.classList.toggle('selected', !all); });
+}
+
+function toggleAI() {
+  aiEnabled = !aiEnabled;
+  document.getElementById('aiToggle').classList.toggle('on', aiEnabled);
+  document.getElementById('apiKeySection').style.display = aiEnabled ? 'block' : 'none';
+  document.getElementById('aiStatusText').textContent = aiEnabled ? 'Gemini AI 활성화됨' : 'AI 비활성화';
+  document.getElementById('badgeDot').classList.toggle('off', !aiEnabled);
+}
+
+async function generate() {
+  const btn = document.getElementById('generateBtn');
+  const progress = document.getElementById('progressSection');
+  const result = document.getElementById('resultSection');
+  btn.disabled = true; btn.textContent = '생성 중...';
+  progress.classList.add('show'); result.classList.remove('show');
+
+  const selectedEvents = [...document.querySelectorAll('.event-option.selected input')].map(i => i.value);
+  if (!selectedEvents.length) {
+    alert('최소 1개 이상의 행사 유형을 선택해주세요.');
+    btn.disabled = false; btn.textContent = '보고서 생성';
+    progress.classList.remove('show'); return;
+  }
+
+  const progressId = Date.now().toString();
+  const sse = new EventSource('/api/progress/' + progressId);
+  sse.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    const pct = d.step > 0 ? Math.round(d.step / d.total * 100) : 0;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = d.message;
+    let dots = '';
+    for (let i = 1; i <= d.total; i++)
+      dots += '<div class="progress-dot ' + (i < d.step ? 'done' : i === d.step ? 'active' : '') + '"></div>';
+    document.getElementById('progressSteps').innerHTML = dots;
+  };
+
+  const fd = new FormData();
+  fd.append('stock', stockFile);
+  fd.append('sales', salesFile);
+  fd.append('events', JSON.stringify(selectedEvents));
+  fd.append('useAI', aiEnabled.toString());
+  fd.append('progressId', progressId);
+  if (aiEnabled) {
+    const apiKey = (document.getElementById('apiKeyInput').value || '').trim();
+    if (!apiKey) {
+      alert('AI 모드를 사용하려면 Gemini API 키를 입력해주세요.');
+      btn.disabled = false; btn.textContent = '보고서 생성';
+      progress.classList.remove('show'); sse.close(); return;
+    }
+    fd.append('apiKey', apiKey);
+  }
+
+  try {
+    const res = await fetch('/api/generate', { method: 'POST', body: fd });
+    const data = await res.json();
+    sse.close();
+    if (data.error) {
+      alert('오류: ' + data.error);
+      btn.disabled = false; btn.textContent = '보고서 생성';
+      progress.classList.remove('show'); return;
+    }
+    progress.classList.remove('show');
+    result.classList.add('show');
+    document.getElementById('resultDesc').textContent =
+      data.summary.eventsGenerated + '개 행사 시나리오가 생성되었습니다. ' + (data.summary.aiUsed ? '(AI 생성)' : '(템플릿)');
+    document.getElementById('resultStats').innerHTML = [
+      { v: data.summary.totalProducts, l: '총 상품' },
+      { v: data.summary.productsWithStock, l: '재고 보유' },
+      { v: Math.round(data.summary.totalRevenue / 100000000 * 10) / 10 + '억', l: '분석 매출' },
+      { v: data.summary.eventsGenerated + '개', l: '시나리오' }
+    ].map(s => '<div class="stat"><div class="sv">' + s.v + '</div><div class="sl">' + s.l + '</div></div>').join('');
+    // Blob URL로 보고서 열기 (Vercel 서버리스 호환)
+    if (data.reportHtml) {
+      const blob = new Blob([data.reportHtml], { type: 'text/html;charset=utf-8' });
+      document.getElementById('viewReportBtn').href = URL.createObjectURL(blob);
+    } else {
+      document.getElementById('viewReportBtn').href = data.reportUrl;
+    }
+  } catch (err) {
+    sse.close();
+    alert('오류가 발생했습니다: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = '보고서 생성';
+}
+
+['stockZone', 'salesZone'].forEach(id => {
+  const zone = document.getElementById(id);
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const type = id.replace('Zone', '');
+      const input = document.getElementById(type + 'File');
+      const dt = new DataTransfer(); dt.items.add(file);
+      input.files = dt.files; onFileSelect(type, input);
+    }
+  });
+});
+</script>
+</body>
+</html>
